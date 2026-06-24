@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -10,6 +10,8 @@ import AuthScreenLayout from '../../components/auth/AuthScreenLayout';
 import AuthTextField from '../../components/auth/AuthTextField';
 import GradientButton from '../../components/auth/GradientButton';
 import { authStyles } from '../../theme/authStyles';
+import { useAppDispatch } from '../../hooks';
+import { forgotPassword } from '../../redux/slices/authSlice';
 
 interface ForgotFormData {
   email: string;
@@ -21,6 +23,7 @@ const schema = yup.object({
 
 const ForgotPasswordScreen: React.FC = () => {
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
   const [submitted, setSubmitted] = useState(false);
   const [focusedField, setFocusedField] = useState<'email' | null>(null);
   const {
@@ -33,13 +36,22 @@ const ForgotPasswordScreen: React.FC = () => {
     defaultValues: { email: '' },
   });
 
+  const onSubmit = async ({ email }: ForgotFormData) => {
+    const result = await dispatch(forgotPassword(email));
+    if (forgotPassword.rejected.match(result)) {
+      Alert.alert('Reset failed', String(result.payload || 'Unable to send reset email'));
+      return;
+    }
+    setSubmitted(true);
+  };
+
   if (submitted) {
     return (
       <AuthScreenLayout
         headerTitle="Check Your Email"
-        headerSubtitle="Password reset is handled by your backend mail flow."
-        cardTitle="Reset request queued"
-        cardSubtitle="Follow the instructions sent to your inbox."
+        headerSubtitle="Firebase sent a password reset link."
+        cardTitle="Reset email sent"
+        cardSubtitle="Open the link in your inbox to set a new password."
         headerHeight={260}
       >
         <View style={authStyles.successBox}>
@@ -56,9 +68,9 @@ const ForgotPasswordScreen: React.FC = () => {
   return (
     <AuthScreenLayout
       headerTitle="Forgot Password"
-      headerSubtitle="Enter your account email."
+      headerSubtitle="We will email you a Firebase reset link."
       cardTitle="Reset password"
-      cardSubtitle="This screen is ready to connect when the backend exposes a reset endpoint."
+      cardSubtitle="Enter the email used for your Firebase account."
       headerHeight={260}
     >
       <Controller
@@ -83,7 +95,7 @@ const ForgotPasswordScreen: React.FC = () => {
       <GradientButton
         title={isSubmitting ? 'Sending...' : 'Send reset instructions'}
         disabled={isSubmitting}
-        onPress={handleSubmit(() => setSubmitted(true))}
+        onPress={handleSubmit(onSubmit)}
       />
       <TouchableOpacity style={authStyles.footerRow} onPress={() => navigation.goBack()}>
         <Text style={authStyles.footerLink}>Back to login</Text>

@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 import AuthScreenLayout from '../../components/auth/AuthScreenLayout';
 import AuthTextField from '../../components/auth/AuthTextField';
@@ -12,7 +20,7 @@ import GradientButton from '../../components/auth/GradientButton';
 import { authStyles } from '../../theme/authStyles';
 import type { AuthStackParamList } from '../../navigation/types';
 import { useAppDispatch, useAppSelector } from '../../hooks';
-import { register } from '../../redux/slices/authSlice';
+import { googleLogin, register } from '../../redux/slices/authSlice';
 
 interface RegisterFormData {
   name: string;
@@ -36,7 +44,7 @@ type RegisterNav = NativeStackNavigationProp<AuthStackParamList, 'Register'>;
 const RegisterScreen: React.FC = () => {
   const navigation = useNavigation<RegisterNav>();
   const dispatch = useAppDispatch();
-  const { loading } = useAppSelector(state => state.auth);
+  const { loading, error } = useAppSelector(state => state.auth);
   const [focusedField, setFocusedField] = useState<keyof RegisterFormData | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -57,12 +65,19 @@ const RegisterScreen: React.FC = () => {
     }
   };
 
+  const onGoogleSignUp = async () => {
+    const result = await dispatch(googleLogin());
+    if (googleLogin.rejected.match(result)) {
+      Alert.alert('Google sign-up failed', String(result.payload || 'Unable to sign up'));
+    }
+  };
+
   return (
     <AuthScreenLayout
       headerTitle="Create Account"
-      headerSubtitle="Start with polished templates and guided sections."
+      headerSubtitle="Sign up with email or Google via Firebase."
       cardTitle="Sign up"
-      cardSubtitle="Use your email and a secure password."
+      cardSubtitle="Create your account securely with Firebase Auth."
     >
       <Controller
         control={control}
@@ -144,11 +159,29 @@ const RegisterScreen: React.FC = () => {
         )}
       />
 
+      {error ? <Text style={styles.serverError}>{error}</Text> : null}
+
       <GradientButton
         title={loading ? 'Creating account...' : 'Create account'}
         disabled={loading}
         onPress={handleSubmit(onSubmit)}
       />
+
+      <TouchableOpacity
+        style={styles.googleButton}
+        activeOpacity={0.85}
+        disabled={loading}
+        onPress={onGoogleSignUp}
+      >
+        {loading ? (
+          <ActivityIndicator size="small" color="#0F172A" />
+        ) : (
+          <>
+            <Icon name="logo-google" size={20} color="#EA4335" />
+            <Text style={styles.googleText}>Sign up with Google</Text>
+          </>
+        )}
+      </TouchableOpacity>
 
       <View style={authStyles.footerRow}>
         <Text style={authStyles.footerText}>Already registered?</Text>
@@ -161,3 +194,27 @@ const RegisterScreen: React.FC = () => {
 };
 
 export default RegisterScreen;
+
+const styles = StyleSheet.create({
+  serverError: {
+    color: '#DC2626',
+    fontSize: 13,
+    marginTop: 12,
+  },
+  googleButton: {
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    marginTop: 14,
+    backgroundColor: '#FFFFFF',
+  },
+  googleText: {
+    marginLeft: 10,
+    color: '#0F172A',
+    fontWeight: '800',
+  },
+});

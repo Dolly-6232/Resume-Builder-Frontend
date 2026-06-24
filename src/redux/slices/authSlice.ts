@@ -8,6 +8,8 @@ import {
   TOKEN_STORAGE_KEY,
   USER_STORAGE_KEY,
 } from '../../api/client';
+import { firebaseAuthService } from '../../services/firebaseAuth.service';
+import { configureGoogleSignIn } from '../../utils/googleSignIn';
 import { env } from '../../config/env';
 import type { AuthResponse, User } from '../../types';
 
@@ -36,6 +38,8 @@ const persistSession = async ({ token, user }: AuthResponse) => {
 };
 
 export const bootstrapAuth = createAsyncThunk('auth/bootstrap', async () => {
+  configureGoogleSignIn();
+
   const [[, token], [, userJson]] = await AsyncStorage.multiGet([
     TOKEN_STORAGE_KEY,
     USER_STORAGE_KEY,
@@ -51,11 +55,14 @@ export const login = createAsyncThunk(
   'auth/login',
   async (payload: LoginPayload, { rejectWithValue }) => {
     try {
-      const result = await authApi.login(payload);
+      const idToken = await firebaseAuthService.signInWithEmail(payload.email, payload.password);
+      const result = await authApi.firebase({ idToken });
       await persistSession(result);
       return result;
     } catch (error) {
-      return rejectWithValue(getApiErrorMessage(error));
+      return rejectWithValue(
+        error instanceof Error ? error.message : getApiErrorMessage(error),
+      );
     }
   },
 );
@@ -64,11 +71,18 @@ export const register = createAsyncThunk(
   'auth/register',
   async (payload: RegisterPayload, { rejectWithValue }) => {
     try {
-      const result = await authApi.register(payload);
+      const idToken = await firebaseAuthService.signUp(
+        payload.email,
+        payload.password,
+        payload.name,
+      );
+      const result = await authApi.firebase({ idToken, name: payload.name });
       await persistSession(result);
       return result;
     } catch (error) {
-      return rejectWithValue(getApiErrorMessage(error));
+      return rejectWithValue(
+        error instanceof Error ? error.message : getApiErrorMessage(error),
+      );
     }
   },
 );
@@ -77,11 +91,11 @@ export const googleLogin = createAsyncThunk(
   'auth/googleLogin',
   async (_, { rejectWithValue }) => {
     try {
-      GoogleSignin.configure({
-        webClientId: env.googleWebClientId,
-        iosClientId: env.googleIosClientId || undefined,
-        offlineAccess: false,
-      });
+      configureGoogleSignIn();
+
+      if (!env.googleWebClientId) {
+        throw new Error('GOOGLE_WEB_CLIENT_ID is missing from .env');
+      }
 
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       const googleUser = await GoogleSignin.signIn();
@@ -91,7 +105,7 @@ export const googleLogin = createAsyncThunk(
         throw new Error('Google Sign-In did not return an ID token.');
       }
 
-      const result = await authApi.google(idToken);
+      const result = await authApi.firebase({ idToken });
       await persistSession(result);
       return result;
     } catch (error: any) {
@@ -99,7 +113,23 @@ export const googleLogin = createAsyncThunk(
         return rejectWithValue('Google sign-in was cancelled.');
       }
 
-      return rejectWithValue(getApiErrorMessage(error));
+      return rejectWithValue(
+        error instanceof Error ? error.message : getApiErrorMessage(error),
+      );
+    }
+  },
+);
+
+export const forgotPassword = createAsyncThunk(
+  'auth/forgotPassword',
+  async (email: string, { rejectWithValue }) => {
+    try {
+      await firebaseAuthService.sendPasswordResetEmail(email);
+      return email;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : getApiErrorMessage(error),
+      );
     }
   },
 );

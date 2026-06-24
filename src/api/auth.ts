@@ -10,6 +10,11 @@ export interface RegisterPayload extends LoginPayload {
   name: string;
 }
 
+export interface FirebaseAuthPayload {
+  idToken: string;
+  name?: string;
+}
+
 const normalizeUser = (user: any): User | null => {
   if (!user) {
     return null;
@@ -37,18 +42,24 @@ const normalizeAuthResponse = (data: any): AuthResponse => {
 };
 
 export const authApi = {
+  async firebase(payload: FirebaseAuthPayload): Promise<AuthResponse> {
+    const response = await apiClient.post('/auth/firebase', payload);
+    return normalizeAuthResponse(response.data);
+  },
+
+  async google(idToken: string): Promise<AuthResponse> {
+    return this.firebase({ idToken });
+  },
+
+  /** @deprecated Use Firebase auth flow instead */
   async login(payload: LoginPayload): Promise<AuthResponse> {
     const response = await apiClient.post('/auth/login', payload);
     return normalizeAuthResponse(response.data);
   },
 
+  /** @deprecated Use Firebase auth flow instead */
   async register(payload: RegisterPayload): Promise<AuthResponse> {
     const response = await apiClient.post('/auth/register', payload);
-    return normalizeAuthResponse(response.data);
-  },
-
-  async google(idToken: string): Promise<AuthResponse> {
-    const response = await apiClient.post('/auth/google', { idToken });
     return normalizeAuthResponse(response.data);
   },
 };

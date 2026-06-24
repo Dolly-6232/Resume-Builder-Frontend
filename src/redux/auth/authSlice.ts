@@ -2,6 +2,7 @@ export {
   bootstrapAuth,
   clearAuthError,
   forceLogout,
+  forgotPassword,
   googleLogin,
   login,
   logoutUser,

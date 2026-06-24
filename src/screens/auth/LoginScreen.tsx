@@ -69,7 +69,7 @@ const LoginScreen: React.FC = () => {
       headerTitle="Resume Builder"
       headerSubtitle="Create ATS-friendly resumes in minutes."
       cardTitle="Welcome back"
-      cardSubtitle="Sign in to manage your resumes."
+      cardSubtitle="Sign in with email or Google via Firebase."
       showBack={false}
     >
       <Controller
