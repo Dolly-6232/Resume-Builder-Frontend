@@ -59,16 +59,24 @@ const RegisterScreen: React.FC = () => {
   });
 
   const onSubmit = async ({ name, email, password }: RegisterFormData) => {
+    console.log('[RegisterScreen] onSubmit - Form data submitted. Email:', email, 'Name:', name);
     const result = await dispatch(register({ name, email, password }));
     if (register.rejected.match(result)) {
+      console.error('[RegisterScreen] onSubmit - Registration failed:', result.payload);
       Alert.alert('Registration failed', String(result.payload || 'Unable to create account'));
+    } else {
+      console.log('[RegisterScreen] onSubmit - Registration succeeded');
     }
   };
 
   const onGoogleSignUp = async () => {
+    console.log('[RegisterScreen] onGoogleSignUp - Initiated');
     const result = await dispatch(googleLogin());
     if (googleLogin.rejected.match(result)) {
+      console.error('[RegisterScreen] onGoogleSignUp - Google sign-up failed:', result.payload);
       Alert.alert('Google sign-up failed', String(result.payload || 'Unable to sign up'));
+    } else {
+      console.log('[RegisterScreen] onGoogleSignUp - Google sign-up succeeded');
     }
   };
 

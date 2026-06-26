@@ -51,16 +51,24 @@ const LoginScreen: React.FC = () => {
   });
 
   const onSubmit = async (data: LoginFormData) => {
+    console.log('[LoginScreen] onSubmit - Form data submitted. Email:', data.email);
     const result = await dispatch(login(data));
     if (login.rejected.match(result)) {
+      console.error('[LoginScreen] onSubmit - Login failed:', result.payload);
       Alert.alert('Login failed', String(result.payload || 'Unable to log in'));
+    } else {
+      console.log('[LoginScreen] onSubmit - Login succeeded');
     }
   };
 
   const onGoogleLogin = async () => {
+    console.log('[LoginScreen] onGoogleLogin - Initiated');
     const result = await dispatch(googleLogin());
     if (googleLogin.rejected.match(result)) {
+      console.error('[LoginScreen] onGoogleLogin - Google login failed:', result.payload);
       Alert.alert('Google sign-in failed', String(result.payload || 'Unable to sign in'));
+    } else {
+      console.log('[LoginScreen] onGoogleLogin - Google login succeeded');
     }
   };
 

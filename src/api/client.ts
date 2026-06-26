@@ -37,6 +37,10 @@ apiClient.interceptors.response.use(
 
 export const getApiErrorMessage = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
+    if (error.message === 'Network Error' && !error.response) {
+      return `Cannot reach backend API at ${env.apiUrl}. Start the backend server and use 10.0.2.2 only for Android emulator; use your computer LAN IP for a physical phone.`;
+    }
+
     const data = error.response?.data as
       | { message?: string; error?: string }
       | undefined;

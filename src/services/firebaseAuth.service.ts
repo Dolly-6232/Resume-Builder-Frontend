@@ -18,6 +18,7 @@ interface FirebaseErrorResponse {
 }
 
 const FIREBASE_ERROR_MESSAGES: Record<string, string> = {
+  API_KEY_INVALID: 'Firebase API key is invalid. Check FIREBASE_WEB_API_KEY in .env.',
   EMAIL_EXISTS: 'An account already exists with this email.',
   EMAIL_NOT_FOUND: 'No account found with this email.',
   INVALID_PASSWORD: 'Incorrect password. Please try again.',
@@ -42,33 +43,52 @@ const mapFirebaseError = (payload: FirebaseErrorResponse): string => {
   return 'Authentication failed. Please try again.';
 };
 
+const getNetworkErrorMessage = (endpoint: string): string => {
+  if (endpoint === 'accounts:signInWithPassword') {
+    return 'Network error while signing in with Firebase. Check internet access and FIREBASE_WEB_API_KEY in .env.';
+  }
+
+  return 'Network error while contacting Firebase. Check internet access and Firebase configuration.';
+};
+
 const postFirebaseAuth = async (
   endpoint: string,
   body: Record<string, unknown>,
 ): Promise<FirebaseAuthResponse> => {
   if (!env.firebaseWebApiKey) {
+    console.error('[FirebaseAuthService] API key is missing from .env');
     throw new Error('FIREBASE_WEB_API_KEY is missing from .env');
   }
 
-  const response = await fetch(
-    `${FIREBASE_AUTH_BASE}/${endpoint}?key=${env.firebaseWebApiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    },
-  );
+  console.log(`[FirebaseAuthService] Request to firebase auth endpoint: ${endpoint} for email: ${body.email || 'N/A'}`);
+  let response: Response;
+  try {
+    response = await fetch(
+      `${FIREBASE_AUTH_BASE}/${endpoint}?key=${env.firebaseWebApiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      },
+    );
+  } catch (error) {
+    console.error(`[FirebaseAuthService] Network error during postFirebaseAuth calling ${endpoint}:`, error);
+    throw new Error(getNetworkErrorMessage(endpoint));
+  }
 
   const data = (await response.json()) as FirebaseAuthResponse & FirebaseErrorResponse;
 
   if (!response.ok) {
+    console.warn(`[FirebaseAuthService] Response not OK from ${endpoint}:`, data);
     throw new Error(mapFirebaseError(data));
   }
 
   if (!data.idToken) {
+    console.warn(`[FirebaseAuthService] Response OK from ${endpoint} but did not return idToken`);
     throw new Error('Firebase did not return an ID token.');
   }
 
+  console.log(`[FirebaseAuthService] Request to ${endpoint} completed successfully.`);
   return data;
 };
 
