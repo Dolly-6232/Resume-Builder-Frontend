@@ -5,6 +5,11 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AppStackParamList, MainTabParamList } from '../../navigation/types';
+import { useAppDispatch, useAppSelector } from '../../hooks';
+import { fetchResumes } from '../../redux/slices/resumeSlice';
+import ScreenLayout from '../../components/common/ScreenLayout';
+import StatCard, { QuickActionCard } from '../../components/common/StatCard';
+
 
 type HomeNav = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'HomeTab'>,
@@ -24,8 +29,8 @@ const HomeScreen: React.FC = () => {
   const avgAts =
     resumes.length > 0
       ? Math.round(
-          resumes.reduce((sum, resume) => sum + (resume.atsScore || 0), 0) / resumes.length,
-        )
+        resumes.reduce((sum, resume) => sum + (resume.atsScore || 0), 0) / resumes.length,
+      )
       : 0;
 
   const firstName = user?.name?.split(' ')[0] || 'there';

@@ -8,7 +8,9 @@ import {
 } from '@env';
 
 const defaultApiUrl =
-  Platform.OS === 'android' ? 'http://10.0.2.2:5000/api' : 'http://localhost:5000/api';
+  Platform.OS === 'android'
+    ? 'https://resume-builder-backend-u5yd.onrender.com/api'
+    : 'https://resume-builder-backend-u5yd.onrender.com/api';
 
 export const env = {
   apiUrl: (API_URL || API_BASE_URL)?.trim() || defaultApiUrl,

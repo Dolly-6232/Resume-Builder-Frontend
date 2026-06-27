@@ -58,4 +58,6 @@ export interface TemplateOption {
   description: string;
   icon: string;
   accent: string;
+  isPro?: boolean;
 }
+

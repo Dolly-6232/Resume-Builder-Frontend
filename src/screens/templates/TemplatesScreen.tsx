@@ -31,14 +31,22 @@ const TemplatesScreen: React.FC = () => {
             activeOpacity={0.85}
             onPress={() => navigation.navigate('ResumeEditor', { template: template.id })}
           >
-            <View style={[styles.iconWrap, { backgroundColor: `${template.accent}18` }]}>
-              <Icon name={template.icon} size={24} color={template.accent} />
+            <View style={styles.cardHeader}>
+              <View style={[styles.iconWrap, { backgroundColor: `${template.accent}18` }]}>
+                <Icon name={template.icon} size={24} color={template.accent} />
+              </View>
+              {template.isPro && (
+                <View style={styles.proBadge}>
+                  <Icon name="star" size={10} color="#D97706" />
+                  <Text style={styles.proText}>PRO</Text>
+                </View>
+              )}
             </View>
             <Text style={styles.name}>{template.name}</Text>
             <Text style={styles.description}>{template.description}</Text>
             <View style={styles.useRow}>
               <Text style={[styles.useText, { color: template.accent }]}>Use template</Text>
-              <Icon name="arrow-forward" size={16} color={template.accent} />
+              <Icon name={template.isPro ? 'lock-closed' : 'arrow-forward'} size={16} color={template.accent} />
             </View>
           </TouchableOpacity>
         ))}
@@ -93,5 +101,25 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     marginRight: 4,
+  },
+  proBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  proText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#D97706',
+    marginLeft: 2,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
 });
